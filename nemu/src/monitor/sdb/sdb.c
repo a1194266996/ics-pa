@@ -16,6 +16,7 @@
 #include <utils.h>
 #include <isa.h>
 #include <cpu/cpu.h>
+#include <memory/paddr.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
@@ -48,6 +49,44 @@ static int cmd_c(char *args) {
   return 0;
 }
 
+static int cmd_si(char *args)
+{
+  int step = 1;
+  if (args != NULL)
+  {
+    sscanf(args, "%d", &step);
+  }
+  cpu_exec(step);
+  return 0;
+}
+
+static int cmd_info(char *args)
+{
+  if(args == NULL){
+    printf("No args.\n");
+  }else if(strcmp(args,"r") == 0){
+    isa_reg_display();
+  }else{
+    printf("unsupported now\n");
+  }
+  return 0;
+}
+
+static int cmd_x(char *args)
+{
+  char* n = strtok(args," ");
+    char* baseaddr = strtok(NULL," ");
+    int len = 0;
+    paddr_t addr = 0;
+    sscanf(n, "%d", &len);
+    sscanf(baseaddr,"%x", &addr);
+    for(int i = 0 ; i < len ; i ++)
+    {
+        printf("%x\n",paddr_read(addr,4));//addr len
+        addr = addr + 4;
+    }
+  return 0;
+}
 
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_QUIT;
@@ -64,6 +103,9 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "sigle step", cmd_si },
+  { "info", "printf reg info", cmd_info },
+  { "x", "printf memory", cmd_x },
 
   /* TODO: Add more commands */
 
