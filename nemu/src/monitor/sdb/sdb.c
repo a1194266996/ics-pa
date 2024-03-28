@@ -88,6 +88,17 @@ static int cmd_x(char *args)
   return 0;
 }
 
+static int cmd_p(char* args){
+    if(args == NULL){
+        printf("No args\n");
+        return 0;
+    }
+    //  printf("args = %s\n", args);
+    bool flag = false;
+    expr(args, &flag);
+    return 0;
+}
+
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_QUIT;
   return -1;
@@ -106,6 +117,7 @@ static struct {
   { "si", "sigle step", cmd_si },
   { "info", "printf reg info", cmd_info },
   { "x", "printf memory", cmd_x },
+  { "p", "printf expr", cmd_p },
 
   /* TODO: Add more commands */
 
