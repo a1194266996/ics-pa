@@ -1,17 +1,17 @@
 /***************************************************************************************
-* Copyright (c) 2014-2022 Zihao Yu, Nanjing University
-*
-* NEMU is licensed under Mulan PSL v2.
-* You can use this software according to the terms and conditions of the Mulan PSL v2.
-* You may obtain a copy of Mulan PSL v2 at:
-*          http://license.coscl.org.cn/MulanPSL2
-*
-* THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-* EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-* MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-*
-* See the Mulan PSL v2 for more details.
-***************************************************************************************/
+ * Copyright (c) 2014-2022 Zihao Yu, Nanjing University
+ *
+ * NEMU is licensed under Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan
+ *PSL v2. You may obtain a copy of Mulan PSL v2 at:
+ *          http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY
+ *KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+ *NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ *
+ * See the Mulan PSL v2 for more details.
+ ***************************************************************************************/
 
 #include <isa.h>
 
@@ -21,7 +21,8 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,
+  TK_NOTYPE = 256,
+  TK_EQ,
   NUM = 1,
   RESGISTER = 2,
   HEX = 3,
@@ -33,7 +34,8 @@ enum {
   YOU = 9,
   LEQ = 10,
   YINYONG = 11,
-  POINT, NEG
+  POINT,
+  NEG
 
   /* TODO: Add more token types */
 
@@ -44,30 +46,30 @@ static struct rule {
   int token_type;
 } rules[] = {
 
-  /* TODO: Add more rules.
-   * Pay attention to the precedence level of different rules.
-   */
+    /* TODO: Add more rules.
+     * Pay attention to the precedence level of different rules.
+     */
 
-  {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"==", TK_EQ},        // equal
-  {"\\-", '-'},         // sub
-  {"\\*", '*'},         // mul
-  {"\\/", '/'},         // div
+    {" +", TK_NOTYPE}, // spaces
+    {"\\+", '+'},      // plus
+    {"==", TK_EQ},     // equal
+    {"\\-", '-'},      // sub
+    {"\\*", '*'},      // mul
+    {"\\/", '/'},      // div
 
-  {"\\(", ZUO},
-  {"\\)", YOU},
-  {"\\<\\=", LEQ},            // TODO
-  {"\\=\\=", EQ},        // equal
-  {"\\!\\=", NOTEQ},
+    {"\\(", ZUO},
+    {"\\)", YOU},
+    {"\\<\\=", LEQ}, // TODO
+    {"\\=\\=", EQ},  // equal
+    {"\\!\\=", NOTEQ},
 
-  {"\\|\\|", OR},       // Opetor
-  {"\\&\\&", AND},
-  {"\\!", '!'},
+    {"\\|\\|", OR}, // Opetor
+    {"\\&\\&", AND},
+    {"\\!", '!'},
 
-  {"\\$[a-zA-Z]*[0-9]*", RESGISTER},
-  {"0[xX][0-9a-fA-F]+", HEX},
-  {"[0-9]*", NUM},
+    {"\\$[a-zA-Z]*[0-9]*", RESGISTER},
+    {"0[xX][0-9a-fA-F]+", HEX},
+    {"[0-9]*", NUM},
 
 };
 
@@ -83,7 +85,7 @@ void init_regex() {
   char error_msg[128];
   int ret;
 
-  for (i = 0; i < NR_REGEX; i ++) {
+  for (i = 0; i < NR_REGEX; i++) {
     ret = regcomp(&re[i], rules[i].regex, REG_EXTENDED);
     if (ret != 0) {
       regerror(ret, &re[i], error_msg, 128);
@@ -98,7 +100,7 @@ typedef struct token {
 } Token;
 
 static Token tokens[32] __attribute__((used)) = {};
-static int nr_token __attribute__((used))  = 0;
+static int nr_token __attribute__((used)) = 0;
 
 static bool make_token(char *e) {
   int position = 0;
@@ -109,13 +111,14 @@ static bool make_token(char *e) {
 
   while (e[position] != '\0') {
     /* Try all rules one by one. */
-    for (i = 0; i < NR_REGEX; i ++) {
-      if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 && pmatch.rm_so == 0) {
+    for (i = 0; i < NR_REGEX; i++) {
+      if (regexec(&re[i], e + position, 1, &pmatch, 0) == 0 &&
+          pmatch.rm_so == 0) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-            i, rules[i].regex, position, substr_len, substr_len, substr_start);
+        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s", i,
+            rules[i].regex, position, substr_len, substr_len, substr_start);
 
         position += substr_len;
 
@@ -126,80 +129,80 @@ static bool make_token(char *e) {
 
         Token tmp_token;
         switch (rules[i].token_type) {
-          case '+':
-              tmp_token.type = '+';
-              tokens[nr_token ++] = tmp_token;
-              break;
-          case '-':
-              tmp_token.type = '-';
-              tokens[nr_token ++] = tmp_token;
-              break;
-          case '*':
-              tmp_token.type = '*';
-              tokens[nr_token ++] = tmp_token;
-              break;
-          case '/':
-              tmp_token.type = '/';
-              tokens[nr_token ++] = tmp_token;
-              break;
-          case 256:
-              break;
-          case '!':
-              tmp_token.type = '!';
-              tokens[nr_token ++] = tmp_token;
-              break;
-          case 9:
-              tmp_token.type = ')';
-              tokens[nr_token ++] = tmp_token;
-              break;
-          case 8:
-              tmp_token.type = '(';
-              tokens[nr_token ++] = tmp_token;
-              break;
+        case '+':
+          tmp_token.type = '+';
+          tokens[nr_token++] = tmp_token;
+          break;
+        case '-':
+          tmp_token.type = '-';
+          tokens[nr_token++] = tmp_token;
+          break;
+        case '*':
+          tmp_token.type = '*';
+          tokens[nr_token++] = tmp_token;
+          break;
+        case '/':
+          tmp_token.type = '/';
+          tokens[nr_token++] = tmp_token;
+          break;
+        case 256:
+          break;
+        case '!':
+          tmp_token.type = '!';
+          tokens[nr_token++] = tmp_token;
+          break;
+        case 9:
+          tmp_token.type = ')';
+          tokens[nr_token++] = tmp_token;
+          break;
+        case 8:
+          tmp_token.type = '(';
+          tokens[nr_token++] = tmp_token;
+          break;
 
-              // Special
-          case 1: // num
-              tokens[nr_token].type = 1;
-              strncpy(tokens[nr_token].str, &e[position - substr_len], substr_len);
-              nr_token ++;
-              break;
-          case 2: // regex
-              tokens[nr_token].type = 2;
-              strncpy(tokens[nr_token].str, &e[position - substr_len], substr_len);
-              nr_token ++;
-              break;
-          case 3: // HEX
-              tokens[nr_token].type = 3;
-              strncpy(tokens[nr_token].str, &e[position - substr_len], substr_len);
-              nr_token ++;
-              break;
-          case 4:
-              tokens[nr_token].type = 4;
-              strcpy(tokens[nr_token].str, "==");
-              nr_token++;
-              break;
-          case 5:
-              tokens[nr_token].type = 5;
-              strcpy(tokens[nr_token].str, "!=");
-              nr_token++;
-          case 6:
-              tokens[nr_token].type = 6;
-              strcpy(tokens[nr_token].str, "||");
-              nr_token++;
-              break;
-          case 7:
-              tokens[nr_token].type = 7;
-              strcpy(tokens[nr_token].str, "&&");
-              nr_token++;
-              break;
-          case 10:
-              tokens[nr_token].type = 10;
-              strcpy(tokens[nr_token].str, "<=");
-              nr_token ++;
-              break;
-          default:
-              printf("i = %d and No rules is com.\n", i);
-              break;
+          // Special
+        case 1: // num
+          tokens[nr_token].type = 1;
+          strncpy(tokens[nr_token].str, &e[position - substr_len], substr_len);
+          nr_token++;
+          break;
+        case 2: // regex
+          tokens[nr_token].type = 2;
+          strncpy(tokens[nr_token].str, &e[position - substr_len], substr_len);
+          nr_token++;
+          break;
+        case 3: // HEX
+          tokens[nr_token].type = 3;
+          strncpy(tokens[nr_token].str, &e[position - substr_len], substr_len);
+          nr_token++;
+          break;
+        case 4:
+          tokens[nr_token].type = 4;
+          strcpy(tokens[nr_token].str, "==");
+          nr_token++;
+          break;
+        case 5:
+          tokens[nr_token].type = 5;
+          strcpy(tokens[nr_token].str, "!=");
+          nr_token++;
+        case 6:
+          tokens[nr_token].type = 6;
+          strcpy(tokens[nr_token].str, "||");
+          nr_token++;
+          break;
+        case 7:
+          tokens[nr_token].type = 7;
+          strcpy(tokens[nr_token].str, "&&");
+          nr_token++;
+          break;
+        case 10:
+          tokens[nr_token].type = 10;
+          strcpy(tokens[nr_token].str, "<=");
+          nr_token++;
+          break;
+        default:
+          printf("i = %d and No rules is com.\n", i);
+          break;
         }
         // len = nr_token;
         break;
@@ -215,130 +218,119 @@ static bool make_token(char *e) {
   return true;
 }
 
-bool check_parentheses(int p, int q)
-{
-    if(tokens[p].type != '('  || tokens[q].type != ')')
-        return false;
-    int l = p , r = q;
-    while(l < r)
-    {
-        if(tokens[l].type == '('){
-            if(tokens[r].type == ')')
-            {
-                l ++ , r --;
-                continue;
-            } else
-                r --;
-        }
-        else if(tokens[l].type == ')')
-            return false;
-        else l ++;
-    }
-    return true;
+bool check_parentheses(int p, int q) {
+  if (tokens[p].type != '(' || tokens[q].type != ')')
+    return false;
+  int l = p, r = q;
+  while (l < r) {
+    if (tokens[l].type == '(') {
+      if (tokens[r].type == ')') {
+        l++, r--;
+        continue;
+      } else
+        r--;
+    } else if (tokens[l].type == ')')
+      return false;
+    else
+      l++;
+  }
+  return true;
 }
 
-
-int max(int left, int right){
-  return left > right ? left : right;
-}
+int max(int left, int right) { return left > right ? left : right; }
 
 uint32_t eval(int p, int q) {
-    if (p > q) {
-        /* Bad expression */
-        assert(0);
-        return -1;
-    }else if (p == q) {
-        /* Single token.
-         * For now this token should be a number.
-         * Return the value of the number.
-         */
-        return atoi(tokens[p].str);
-    }else if (check_parentheses(p, q) == true) {
-        /* The expression is surrounded by a matched pair of parentheses.
-         * If that is the case, just throw away the parentheses.
-         */
-        // printf("check p = %d, q = %d\n",p + 1 , q - 1);
-        return eval(p + 1, q - 1);
-    }else {
-        int op = -1; // op = the position of 主运算符 in the token expression;
-        bool flag = false;
-        for(int i = p ; i <= q ; i ++)
-        {
-          if(tokens[i].type == '(')
-          {
-              while(tokens[i].type != ')')
-                  i ++;
-          }
-          if(!flag && tokens[i].type == 6){
-              flag = true;
-              op = max(op,i);
-          }
+  if (p > q) {
+    /* Bad expression */
+    assert(0);
+    return -1;
+  } else if (p == q) {
+    /* Single token.
+     * For now this token should be a number.
+     * Return the value of the number.
+     */
+    return atoi(tokens[p].str);
+  } else if (check_parentheses(p, q) == true) {
+    /* The expression is surrounded by a matched pair of parentheses.
+     * If that is the case, just throw away the parentheses.
+     */
+    // printf("check p = %d, q = %d\n",p + 1 , q - 1);
+    return eval(p + 1, q - 1);
+  } else {
+    int op = -1; // op = the position of 主运算符 in the token expression;
+    bool flag = false;
+    for (int i = p; i <= q; i++) {
+      if (tokens[i].type == '(') {
+        while (tokens[i].type != ')')
+          i++;
+      }
+      if (!flag && tokens[i].type == 6) {
+        flag = true;
+        op = max(op, i);
+      }
 
-          if(!flag && tokens[i].type == 7 ){
-              flag = true;
-              op = max(op,i);
-          }
+      if (!flag && tokens[i].type == 7) {
+        flag = true;
+        op = max(op, i);
+      }
 
-          if(!flag && tokens[i].type == 5){
-              flag = true;
-              op = max(op,i);
-          }
+      if (!flag && tokens[i].type == 5) {
+        flag = true;
+        op = max(op, i);
+      }
 
-          if(!flag && tokens[i].type == 4){
-              flag = true;
-              op = max(op,i);
-          }
-          if(!flag && tokens[i].type == 10){
-              flag = true;
-              op = max(op, i);
-          }
-          if(!flag && (tokens[i].type == '+' || tokens[i].type == '-')){
-              flag = true;
-              op = max(op, i);
-          }
-          if(!flag && (tokens[i].type == '*' || tokens[i].type == '/') ){
-              op = max(op, i);
-          }
-        }
-        //      printf("op position is %d\n", op);
-        // if register return $register
-        int  op_type = tokens[op].type;
-
-        // 递归处理剩余的部分
-        uint32_t  val1 = eval(p, op - 1);
-        uint32_t  val2 = eval(op + 1, q);
-        //      printf("val1 = %d, val2 = %d \n", val1, val2);
-
-        switch (op_type) {
-          case '+':
-              return val1 + val2;
-          case '-':
-              return val1 - val2;
-          case '*':
-              return val1 * val2;
-          case '/':
-              if(val2 == 0){//printf("division can't zero;\n");
-                  // division_zero = true;
-                  return 0;
-              }
-              return val1 / val2;
-          case 4:
-              return val1 == val2;
-          case 5:
-              return val1 != val2;
-          case 6:
-              return val1 || val2;
-          case 7:
-              return val1 && val2;
-          default:
-              printf("No Op type.");
-              assert(0);
-        }
+      if (!flag && tokens[i].type == 4) {
+        flag = true;
+        op = max(op, i);
+      }
+      if (!flag && tokens[i].type == 10) {
+        flag = true;
+        op = max(op, i);
+      }
+      if (!flag && (tokens[i].type == '+' || tokens[i].type == '-')) {
+        flag = true;
+        op = max(op, i);
+      }
+      if (!flag && (tokens[i].type == '*' || tokens[i].type == '/')) {
+        op = max(op, i);
+      }
     }
+    //      printf("op position is %d\n", op);
+    // if register return $register
+    int op_type = tokens[op].type;
+
+    // 递归处理剩余的部分
+    uint32_t val1 = eval(p, op - 1);
+    uint32_t val2 = eval(op + 1, q);
+    //      printf("val1 = %d, val2 = %d \n", val1, val2);
+
+    switch (op_type) {
+    case '+':
+      return val1 + val2;
+    case '-':
+      return val1 - val2;
+    case '*':
+      return val1 * val2;
+    case '/':
+      if (val2 == 0) { // printf("division can't zero;\n");
+        // division_zero = true;
+        return 0;
+      }
+      return val1 / val2;
+    case 4:
+      return val1 == val2;
+    case 5:
+      return val1 != val2;
+    case 6:
+      return val1 || val2;
+    case 7:
+      return val1 && val2;
+    default:
+      printf("No Op type.");
+      assert(0);
+    }
+  }
 }
-
-
-
 
 word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
