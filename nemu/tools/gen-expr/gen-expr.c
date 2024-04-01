@@ -31,8 +31,62 @@ static char *code_format =
 "  return 0; "
 "}";
 
+static int index_buf = 0;
+int choose() {
+  int flag = rand() % 3;
+  // printf("index = %d, flag = %d. \n", index_buf, flag);
+  return flag;
+}
+
+void gen_num() {
+  int num = rand() % 100;
+  int num_size = 0;
+  int num_temp = num;
+  while (num_temp) {
+    num_temp /= 10;
+    num_size++;
+  }
+  int x = 1;
+  while (num_size--) {
+    x *= 10;
+  }
+  x /= 10;
+  while (num) {
+    char c = num / x + '0';
+    num %= x;
+    x /= 10;
+    buf[index_buf++] = c;
+  }
+}
+
+void gen(char c) { buf[index_buf++] = c; }
+
+void gen_rand_op() {
+  char op[4] = {'+', '-', '*', '/'};
+  int op_position = rand() % 4;
+  buf[index_buf++] = op[op_position];
+}
+
 static void gen_rand_expr() {
-  buf[0] = '\0';
+  // buf[0] = '\0';
+  if (index_buf > 65530) {
+    printf("overSize\n");
+  }
+  switch (choose()) {
+  case 0:
+    gen_num();
+    break;
+  case 1:
+    gen('(');
+    gen_rand_expr();
+    gen(')');
+    break;
+  default:
+    gen_rand_expr();
+    gen_rand_op();
+    gen_rand_expr();
+    break;
+  }
 }
 
 int main(int argc, char *argv[]) {
